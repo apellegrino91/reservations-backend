@@ -1,4 +1,10 @@
-import { Entity, Column, PrimaryGeneratedColumn, Timestamp } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+
+enum ReservationStatus {
+  Booked,
+  Confirmed,
+  Canceled
+}
 
 @Entity()
 export class Reservations {
@@ -18,7 +24,7 @@ export class Reservations {
   phone: string;
 
   @Column()
-  status: number;
+  status: ReservationStatus;
 
   @Column()
   date: number;
