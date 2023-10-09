@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Equal, Repository } from 'typeorm';
-import { Users } from './users.entity';
+import { UserResponse, Users } from './users.entity';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -11,29 +12,41 @@ export class UsersService {
     private usersRepository: Repository<Users>,
   ) {}
 
-  findAll(): Promise<Users[]> {
-    return this.usersRepository.find();
+  async findAll(): Promise<UserResponse[]> {
+    const users = await this.usersRepository.find();
+    var reducedUsers : UserResponse[] = [];
+    users.forEach(element => {
+      reducedUsers.push({id: element.id, username: element.username});
+    });
+
+    return reducedUsers;
   }
 
-  findOneByUsername(username: string): Promise<Users | null> {
-    return this.usersRepository.findOneBy({"username": Equal(username)});
+  async findOneByUsername(username: string): Promise<Users | null> {
+    return await this.usersRepository.findOneBy({"username": Equal(username)});
   }
 
-  findOne(id: number): Promise<Users | null> {
-    return this.usersRepository.findOneBy({ id });
+  async findOne(id: number): Promise<UserResponse | null> {
+    const user = await this.usersRepository.findOneBy({ id });
+    return {id: user.id, username: user.username};
   }
 
-  async create(reservation: Partial<Users>): Promise<Users> {
-    const newUser = this.usersRepository.create(reservation);
-    return this.usersRepository.save(newUser);
+  async create(user: Partial<Users>): Promise<UserResponse> {
+    const hashed = await bcrypt.hash(user.password!, 10);
+    user.password = hashed;
+    const newUser = this.usersRepository.create(user);
+    const received = await this.usersRepository.save(newUser);
+    return {id: received.id, username: received.username};
   }
 
-  async update(id: number, user: Partial<Users>): Promise<Users> {
+  async update(id: number, user: Partial<Users>): Promise<UserResponse> {
     await this.usersRepository.update(id, user);
-    return this.usersRepository.findOne({ where: { id } });
+    const updatedUser = await this.usersRepository.findOne({ where: { id } });
+    return {id: updatedUser.id, username: updatedUser.username};
   }
 
-  async delete(id: number): Promise<void> {
-    await this.usersRepository.delete(id);
+  async delete(id: number): Promise<boolean> {
+    const result = await this.usersRepository.delete(id);
+    return result.affected != null && result.affected > 0;
   }
 }

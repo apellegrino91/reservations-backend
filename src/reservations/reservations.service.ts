@@ -32,8 +32,9 @@ export class ReservationsService {
     await this.reservationsRepository.update(id, reservation);
     return this.reservationsRepository.findOne({ where: { id } });
   }
-
-  async delete(id: number): Promise<void> {
-    await this.reservationsRepository.delete(id);
+  
+  async delete(id: number): Promise<boolean> {
+    const result = await this.reservationsRepository.delete(id);
+    return result.affected != null && result.affected > 0;
   }
 }

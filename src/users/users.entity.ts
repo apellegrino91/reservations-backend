@@ -11,3 +11,8 @@ export class Users {
   @Column()
   password: string;
 }
+
+export class UserResponse {
+  id: number;
+  username: string;
+}
